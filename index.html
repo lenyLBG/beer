@@ -1,26 +1,36 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <title>Beer</title>
 </head>
+
 <body>
     <header>
-        <h1>Bienvenue à la page de la bière</h1>
-        <nav>
-            <ul>
-                <li><a href="index.html">Accueil</a></li>
-                <li><a href="about.html">À propos</a></li>
-                <li><a href="contact.html">Contact</a></li>
-            </ul>
-        </nav>
+        <img src="img/logo.png" alt="Logo Apéro Time" class="logo" style="width: 100px; height: 100px;">
+        <h1>Apéro Time</h1>
     </header>
     <main>
         <input type="text" id="searchBar" placeholder="Rechercher une bière...">
         <div class="beer-list">
-                          
+
+        </div>
+        <div id="pagination-controles" class="flex justify-center mt-4">
+            <button id="btn-precedent-top"
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-l">
+                Précédent
+            </button>
+            <div id="compteur-de-pages"
+                class="text-center mt-4 mx-4 flex justify-center items-center flex-col border rounded-lg p-2">
+                <span id="CompteurDePages" class="mx-4"></span>
+            </div>
+            <button id="btn-suivant-top" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r">
+                Suivant
+            </button>
         </div>
     </main>
     <footer>
@@ -28,4 +38,5 @@
         <script src="script.js"></script>
     </footer>
 </body>
+
 </html>

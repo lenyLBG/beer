@@ -1,14 +1,11 @@
 let pageActuelle = 1;
 const compteurDePagesElement = document.getElementById("CompteurDePages");
 const paginationControles = document.getElementById("pagination-controls");
- 
+
 function updateCompteurDePages() {
-  if (!compteurDePagesElement) {
-    return;
-  }
   compteurDePagesElement.textContent = `page: ${pageActuelle}`;
 }
- 
+
 function modelFetchBeers(page) {
   // Determine where to render cards: prefer #card-container, then .beer-list, then .beer-card
   const findOrCreateContainer = () => {
@@ -76,7 +73,7 @@ function modelFetchBeers(page) {
       cardContainer.innerHTML = previous || `<p class="muted">Impossible de charger les bières pour le moment. ${error.message}</p>`;
     });
 }
- 
+
 const btnSuivantTop = document.getElementById("btn-suivant-top");
 if (btnSuivantTop) {
   btnSuivantTop.addEventListener("click", () => {
@@ -100,10 +97,10 @@ if (btnPrecedentTop) {
 } else {
   console.debug('btn-precedent-top introuvable — pas d\'écouteur ajouté');
 }
- 
+
 updateCompteurDePages();
 modelFetchBeers(pageActuelle);
- 
+
 
 var template = (beer) => `
   <div class="beer card border rounded-lg p-4 shadow-md hover:shadow-xl transition-shadow">
