@@ -145,28 +145,25 @@ if (namesearchBar) {
   });
 }
 window.addEventListener('load', async (event) => {
-  
+
   async function initDb() {
+    console.log('Initialisation de la base de données IndexedDB...');
     return new Promise((resolve, reject) => {
       const request = indexedDB.open('beerDB', 1);
 
       request.onupgradeneeded = event => {
         const db = event.target.result;
-        if (db.objectStoreNames.contains('beers')) {
-          const objectStore = db.createObjectStore('beers', { keyPath: 'id' });
-          objectStore.createIndex('Beer', 'beerName', { unique: false });
-        }
+        const objectStore = db.createObjectStore('beers', { keyPath: 'id' });
+        objectStore.createIndex('name', 'name', { unique: false });
       };
 
       request.onsuccess = event => {
-        const db = event.target.result;
+        resolve(vent.target.result);
       };
 
       request.onerror = event => {
-        console.error('IndexedDB error:', event.target.errorCode);
+        reject('Error opening IndexedDB');
       };
-
-
     });
   }
   const db = await initDb();
@@ -176,4 +173,44 @@ window.addEventListener('load', async (event) => {
     const objectStore = transaction.objectStore('beers');
     await objectStore.add(beer);
   }
+
+  async function getBeerFromDb(id) {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['beers'], 'readonly');
+      const objectStore = transaction.objectStore('beers');
+      const request = objectStore.getAll();
+
+      request.onsuccess = event => {
+        resolve(event.target.result);
+      };
+
+      request.onerror = event => {
+        reject('Error getting beer from IndexedDB');
+      };
+    });
+  }
+
+  async function modelFetchBeers() {
+    try {
+      const beers = await getBeerFromDb();
+
+      if (beers.length === 0) {
+        beers = await fetch('https://api.punkapi.com/v2/beers?page=1')
+          .then(response => response.json())
+          .then(async data => {
+            data.forEach(async beer => {
+              await addBeerToDb(beer);
+            });
+            return data;
+          })
+          .catch(error => console.error('Error fetching beers:', error));
+      }
+      displayBeers(beers);
+    } catch (error) {
+      console.error('Error fetching beers:', error);
+    }
+
+  }
+  modelFetchBeers();
+
 });
