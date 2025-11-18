@@ -144,4 +144,36 @@ if (namesearchBar) {
     });
   });
 }
+window.addEventListener('load', async (event) => {
+  
+  async function initDb() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('beerDB', 1);
 
+      request.onupgradeneeded = event => {
+        const db = event.target.result;
+        if (db.objectStoreNames.contains('beers')) {
+          const objectStore = db.createObjectStore('beers', { keyPath: 'id' });
+          objectStore.createIndex('Beer', 'beerName', { unique: false });
+        }
+      };
+
+      request.onsuccess = event => {
+        const db = event.target.result;
+      };
+
+      request.onerror = event => {
+        console.error('IndexedDB error:', event.target.errorCode);
+      };
+
+
+    });
+  }
+  const db = await initDb();
+
+  async function addBeerToDb(beer) {
+    const transaction = db.transaction(['beers'], 'readwrite');
+    const objectStore = transaction.objectStore('beers');
+    await objectStore.add(beer);
+  }
+});
