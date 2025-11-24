@@ -26,16 +26,42 @@ header{
 	background: linear-gradient(90deg,var(--accent),#F4EFE2);
 	color: #05202a;
 	padding:1.25rem 1rem;
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	flex-wrap:wrap;
+	gap:1rem;
 }
-.header-inner{max-width:var(--max-width);margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.header-inner{max-width:var(--max-width);margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;width:100%}
 header h1{margin:0;font-size:1.25rem}
-nav ul{display:flex;gap:.85rem;margin:0;padding:0;list-style:none}
-nav a{color:inherit;text-decoration:none;font-weight:600}
+header img{flex-shrink:0}
+nav{flex:1;min-width:auto}
+nav ul{display:flex;gap:.85rem;margin:0;padding:0;list-style:none;flex-wrap:wrap}
+nav a{color:inherit;text-decoration:none;font-weight:600;white-space:nowrap}
 nav a:hover{text-decoration:underline;opacity:.95}
 
 /* Main container */
 main{padding:2rem 1rem}
 .container{max-width:var(--max-width);margin:0 auto}
+
+/* Form layout */
+.beer-form{
+	display:grid;
+	grid-template-columns:1fr 320px;
+	gap:1.25rem;
+	align-items:start;
+}
+
+@media (max-width:1000px){
+	.beer-form{grid-template-columns:1fr}
+}
+
+@media (max-width:720px){
+	.beer-form{
+		grid-template-columns:1fr;
+		gap:1rem;
+	}
+}
 
 /* Beer grid */
 .beer-card, .beer-list{
@@ -144,11 +170,173 @@ footer{padding:2rem 1rem;text-align:center;color:var(--muted)}
 }
 
 @media (max-width:720px){
-	.beer .media{height:120px}
-	.beer img{width:88px;height:120px}
+	main{padding:1rem 0.75rem}
+	header{padding:1rem 0.75rem}
+	
+	.beer-card, .beer-list{
+		grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+		gap:0.75rem;
+	}
+	
+	.beer{padding:0.75rem;gap:0.4rem}
+	.beer .media{height:100px}
+	.beer img{width:72px;height:100px}
+	.beer h2{font-size:0.95rem}
+	.beer .muted{font-size:0.8rem}
+	.beer .beer-desc{font-size:0.8rem}
+	
 	.beer-details{flex-direction:column;align-items:center}
 	.beer-details .media{flex:none}
 	.beer-details img{width:180px;height:220px}
+	
+	/* Search and input */
+	input{max-width:100%;margin-bottom:1rem;padding:0.6rem 0.75rem;font-size:16px}
+	textarea{max-width:100%;padding:0.5rem 0.75rem}
+	
+	/* Pagination controls */
+	#pagination-controles{
+		flex-wrap:wrap;
+		gap:0.5rem;
+		justify-content:center;
+		padding:0.5rem;
+	}
+	
+	#pagination-controles button{
+		padding:0.4rem 0.6rem;
+		font-size:0.9rem;
+	}
+	
+	#CompteurDePages{
+		margin:0.5rem 0;
+		width:100%;
+		order:3;
+	}
+	
+	.mx-2{margin:0.25rem!important}
+	
+	#pageSelect{
+		padding:0.4rem 0.5rem;
+		font-size:0.9rem;
+		min-width:auto;
+	}
+	
+	/* Form improvements */
+	.form-row{margin-bottom:0.75rem}
+	.form-row input, .form-row textarea, .form-row select{width:100%;max-width:100%;font-size:16px}
+	
+	button{
+		width:100%;
+		padding:0.6rem 1rem;
+		font-size:0.95rem;
+	}
+	
+	/* Modal on mobile */
+	.modal-content{
+		width:95%;
+		padding:1.5rem;
+		max-height:90vh;
+	}
+	
+	.modal-body{gap:0.5rem}
+	
+	/* Header nav */
+	nav ul{gap:0.5rem;flex-wrap:wrap}
+	nav a{font-size:0.9rem}
+	
+	header img{width:60px!important;height:60px!important}
+}
+
+@media (max-width:480px){
+	:root{--max-width:100%}
+	
+	main{padding:0.75rem 0.5rem}
+	header{padding:0.75rem 0.5rem}
+	
+	.beer-card, .beer-list{
+		grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+		gap:0.5rem;
+	}
+	
+	.beer{padding:0.5rem;gap:0.3rem}
+	.beer .media{height:80px}
+	.beer img{width:60px;height:90px}
+	.beer h2{font-size:0.85rem;margin:0.25rem 0 0}
+	.beer .muted{font-size:0.75rem}
+	.beer .beer-desc{display:none}
+	.beer .beer-meta{font-size:0.75rem;flex-direction:column;gap:0.2rem}
+	
+	input{
+		padding:0.5rem 0.5rem;
+		font-size:16px;
+		margin-bottom:1rem;
+		max-width:100%;
+	}
+	
+	textarea{padding:0.4rem 0.5rem;font-size:0.95rem}
+	
+	.btn-details{padding:0.35rem 0.5rem;font-size:0.8rem}
+	
+	button{
+		width:100%;
+		padding:0.5rem 0.75rem;
+		font-size:0.9rem;
+	}
+	
+	/* Pagination on very small screens */
+	#pagination-controles{
+		flex-direction:column;
+		gap:0.3rem;
+	}
+	
+	#pagination-controles button{
+		width:100%;
+		padding:0.4rem 0.5rem;
+		font-size:0.85rem;
+	}
+	
+	#pageSelect{width:100%;min-width:auto;font-size:0.9rem}
+	
+	#CompteurDePages{
+		width:100%;
+		margin:0.5rem 0;
+		font-size:0.9rem;
+	}
+	
+	.mx-2{
+		width:100%;
+		margin:0.25rem 0!important;
+		display:flex;
+		justify-content:space-between;
+		align-items:center;
+	}
+	
+	.mx-2 label{font-size:0.85rem}
+	
+	/* Modal */
+	.modal-content{
+		width:100%;
+		padding:1rem;
+		max-height:100vh;
+		border-radius:8px;
+	}
+	
+	.modal-body h2{font-size:1.1rem}
+	.modal-body p{font-size:0.9rem}
+	
+	/* Header */
+	header{text-align:center}
+	header img{width:50px!important;height:50px!important}
+	
+	nav ul{
+		justify-content:center;
+		gap:0.75rem;
+		flex-wrap:wrap;
+	}
+	
+	nav a{font-size:0.85rem;padding:0.4rem 0.6rem}
+	
+	/* Footer */
+	footer{padding:1rem 0.5rem;font-size:0.85rem}
 }
 
 /* Small loader */
@@ -172,7 +360,7 @@ p{line-height:1.5;margin:0}
 
 /* Truncate descriptions neatly */
 .beer .beer-desc{
-	display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden; -webkit-line-clamp:3;
+	display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden; -webkit-line-clamp:3; line-clamp:3;
 }
 
 /* Meta pills */

@@ -1,6 +1,6 @@
 {
     "name": "Apero Time",
-    "short_name": "Apero",
+    "short_name": "Apero Time",
     "description": "app pour trouver des bieres",
     "start_url": "./index.html",
     "display": "standalone",
