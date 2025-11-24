@@ -52,12 +52,24 @@ function modelFetchBeers(page) {
   };
 
   fetchWithFallback([primary, fallback])
-    .then((data) => {
+    .then(async (data) => {
       console.log('Beers fetched:', data && data.length);
       if (!Array.isArray(data) || data.length === 0) {
         cardContainer.innerHTML = '<p class="muted">Aucune bière trouvée.</p>';
         return;
       }
+      
+      // Save all beers to IndexedDB
+      console.log('Saving beers to IndexedDB...');
+      for (const beer of data) {
+        try {
+          await addBeerToDb(beer);
+        } catch (err) {
+          console.warn('Failed to save beer', beer.id, err);
+        }
+      }
+      console.log('All beers saved to IndexedDB.');
+      
       cardContainer.innerHTML = data.map((beer) => template(beer)).join("");
       // add entrance animation class with a small stagger
       requestAnimationFrame(() => {
@@ -157,11 +169,9 @@ window.addEventListener('load', async (event) => {
         objectStore.createIndex('name', 'name', { unique: false });
       };
 
-      request.onsuccess = event => {
-        resolve(vent.target.result);
-      };
-
-      request.onerror = event => {
+       request.onsuccess = event => {
+         resolve(event.target.result);
+       };      request.onerror = event => {
         reject('Error opening IndexedDB');
       };
     });
@@ -169,48 +179,39 @@ window.addEventListener('load', async (event) => {
   const db = await initDb();
 
   async function addBeerToDb(beer) {
-    const transaction = db.transaction(['beers'], 'readwrite');
-    const objectStore = transaction.objectStore('beers');
-    await objectStore.add(beer);
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['beers'], 'readwrite');
+      const objectStore = transaction.objectStore('beers');
+      const request = objectStore.put(beer); // use put to avoid duplicates
+      request.onsuccess = () => resolve(beer);
+      request.onerror = () => reject(new Error('Failed to add beer'));
+    });
   }
 
   async function getBeerFromDb(id) {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(['beers'], 'readonly');
       const objectStore = transaction.objectStore('beers');
-      const request = objectStore.getAll();
+      const request = id ? objectStore.get(id) : objectStore.getAll();
 
       request.onsuccess = event => {
         resolve(event.target.result);
       };
 
       request.onerror = event => {
-        reject('Error getting beer from IndexedDB');
+        reject(new Error('Error getting beer from IndexedDB'));
       };
     });
   }
 
-  async function modelFetchBeers() {
-    try {
-      const beers = await getBeerFromDb();
-
-      if (beers.length === 0) {
-        beers = await fetch('https://api.punkapi.com/v2/beers?page=1')
-          .then(response => response.json())
-          .then(async data => {
-            data.forEach(async beer => {
-              await addBeerToDb(beer);
-            });
-            return data;
-          })
-          .catch(error => console.error('Error fetching beers:', error));
-      }
-      displayBeers(beers);
-    } catch (error) {
-      console.error('Error fetching beers:', error);
-    }
-
+  async function getAllBeersFromDb() {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['beers'], 'readonly');
+      const objectStore = transaction.objectStore('beers');
+      const request = objectStore.getAll();
+      request.onsuccess = e => resolve(e.target.result || []);
+      request.onerror = () => reject(new Error('Failed to get beers'));
+    });
   }
-  modelFetchBeers();
 
 });
