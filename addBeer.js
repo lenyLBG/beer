@@ -60,18 +60,27 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         const name = document.getElementById('beerName').value.trim();
-        const type = document.getElementById('beerType').value.trim();
+        const tagline = (document.getElementById('tagline') && document.getElementById('tagline').value || '').trim();
         const alcoholContent = parseFloat(document.getElementById('alcoholContent').value);
-        const brewery = document.getElementById('brewery').value.trim();
+        const ibuValue = document.getElementById('ibu') && document.getElementById('ibu').value;
+        const ibu = ibuValue ? parseFloat(ibuValue) : null;
         const description = document.getElementById('description').value.trim();
         const file = fileInput && fileInput.files && fileInput.files[0];
 
-        if (!name || !type || isNaN(alcoholContent) || !brewery) {
+        if (!name || isNaN(alcoholContent)) {
             showMessage('Veuillez remplir tous les champs requis.', true);
             return;
         }
 
-        const beer = { name, type, alcoholContent, brewery, description };
+        // Map fields to shapes similar to API objects
+        const beer = {
+            name,
+            tagline: tagline || '',
+            description,
+            alcoholContent,
+            abv: alcoholContent,
+            ibu: ibu,
+        };
 
         // If an image file was provided, read it as DataURL and attach
         try {

@@ -214,6 +214,11 @@ input{
 	transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out,background-color .15s ease-in-out,color .15s ease-in-out;
 
 }
+textarea{width:100%;max-width:400px;padding:.6rem 1rem;border:1px solid #ccc;border-radius:var(--radius);min-height:96px}
+.form-row{margin-bottom:1rem;display:flex;flex-direction:column;gap:.35rem}
+.form-row label{font-weight:700}
+.form-message{color:green;margin-bottom:8px}
+.preview-image{max-width:200px;border-radius:8px;display:block}
 button{
 	padding:.5rem 1rem;
 	border-radius:var(--radius);

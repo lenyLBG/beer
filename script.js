@@ -244,7 +244,16 @@ if (searchBar) {
           const text = ((b.name || '') + ' ' + (b.tagline || '') + ' ' + (b.description || '')).toLowerCase();
           return text.includes(q);
         });
-        container.innerHTML = filtered.length ? filtered.map(template).join('') : '<p class="muted">Aucun résultat.</p>';
+        
+        // Update pagination for filtered results
+        totalPages = Math.max(1, Math.ceil((filtered.length || 0) / perPage));
+        pageActuelle = 1;
+        
+        const start = (pageActuelle - 1) * perPage;
+        const slice = filtered.slice(start, start + perPage);
+        
+        container.innerHTML = slice.length ? slice.map(renderBeer).join('') : '<p class="muted">Aucun résultat.</p>';
+        setNavButtonsState();
         requestAnimationFrame(() => {
           const cards = container.querySelectorAll('.beer, .card');
           cards.forEach((c, idx) => setTimeout(() => c.classList.add('card-in'), idx * 40));
@@ -277,7 +286,16 @@ if (namesearchBar) {
       try {
         const all = await window.getAllBeersFromDb();
         const filtered = all.filter(b => (b.name || '').toLowerCase().includes(q));
-        container.innerHTML = filtered.length ? filtered.map(template).join('') : '<p class="muted">Aucun résultat.</p>';
+        
+        // Update pagination for filtered results
+        totalPages = Math.max(1, Math.ceil((filtered.length || 0) / perPage));
+        pageActuelle = 1;
+        
+        const start = (pageActuelle - 1) * perPage;
+        const slice = filtered.slice(start, start + perPage);
+        
+        container.innerHTML = slice.length ? slice.map(renderBeer).join('') : '<p class="muted">Aucun résultat.</p>';
+        setNavButtonsState();
         requestAnimationFrame(() => {
           const cards = container.querySelectorAll('.beer, .card');
           cards.forEach((c, idx) => setTimeout(() => c.classList.add('card-in'), idx * 40));
