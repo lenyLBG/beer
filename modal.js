@@ -1,16 +1,24 @@
 // Beer details modal handler
-document.addEventListener('DOMContentLoaded', () => {
+
+// Wait for DOM to be ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initModal);
+} else {
+  initModal();
+}
+
+function initModal() {
   const modal = document.getElementById('beerModal');
   const closeBtn = document.querySelector('.modal-close');
 
   if (!modal) return;
 
   // Open modal with beer details
-  function openBeerModal(beer) {
+  window.openBeerModal = function openBeerModal(beer) {
     if (!beer) return;
 
     // Determine image source
-    const defaultImg = 'img/beer.jpg';
+    const defaultImg = 'img/biere.jpg';
     let src = defaultImg;
     if (beer.imageData) {
       src = beer.imageData;
@@ -32,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('modalIbu').textContent = (beer.ibu ?? '-');
 
     modal.style.display = 'flex';
-  }
+  };
 
   // Close modal
   function closeModal() {
@@ -57,7 +65,4 @@ document.addEventListener('DOMContentLoaded', () => {
       closeModal();
     }
   });
-
-  // Expose openBeerModal globally so renderBeer can call it
-  window.openBeerModal = openBeerModal;
-});
+}

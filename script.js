@@ -198,12 +198,12 @@ modelFetchBeers(pageActuelle);
 /**
  * Render a beer card. Chooses image in this order:
  * 1) beer.imageData (DataURL stored for user-added images)
- * 2) beer.imagePath (local path such as 'img/beer.jpg')
+ * 2) beer.imagePath (local path such as 'img/biere.jpg')
  * 3) beer.image (API-provided filename) via punkapi.online
- * 4) default local image 'img/beer.jpg'
+ * 4) default local image 'img/biere.jpg'
  */
 function renderBeer(beer) {
-  const defaultImg = 'img/beer.jpg';
+  const defaultImg = 'img/biere.jpg';
   let src = defaultImg;
 
   if (beer.imageData) {

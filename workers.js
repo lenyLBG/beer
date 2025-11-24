@@ -7,47 +7,34 @@ const RESOURCES_TO_CACHE = [
   './',
   './index.html',
   './addBeer.html',
-  'style.css',
-  'indexDB.js',
-  './workers.js',
-  'script.js',
-  'modal.js',
-  'addBeer.js',
-  'img/beer.jpg',
-  'img/logo.png',
+  './style.css',
+  './script.js',
+  './modal.js',
+  './addBeer.js',
+  './img/biere.jpg',
+  './img/logo.png',
+  './img/logo192.png',
+  './img/biere512.jpg',
   // Ajoutez ici toutes les ressources que vous souhaitez mettre en cache
 ];
 
 // Installation du service worker
 self.addEventListener('install', event => {
-  // Safer install: try cache.addAll, but on failure attempt to fetch/cache resources individually
-  event.waitUntil((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    try {
-      await cache.addAll(RESOURCES_TO_CACHE);
-      console.log('All resources cached with cache.addAll');
-    } catch (err) {
-      console.warn('cache.addAll failed, falling back to individual fetches', err);
-      for (const url of RESOURCES_TO_CACHE) {
-        try {
-          // Use a Request to control cache behavior and to get clearer errors
-          const req = new Request(url, { cache: 'no-cache' });
-          const res = await fetch(req);
-          if (!res || !res.ok) {
-            console.warn('Resource fetch failed (will not cache):', url, res && res.status);
-            continue;
-          }
-          await cache.put(req, res.clone());
-          console.log('Cached resource:', url);
-        } catch (e) {
-          console.warn('Failed to fetch/cache resource:', url, e);
-        }
-      }
-    }
-
-    // Force the waiting service worker to become the active service worker
-    self.skipWaiting();
-  })());
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        // Cache files individually and skip ones that fail
+        return Promise.all(
+          RESOURCES_TO_CACHE.map(resource =>
+            cache.add(resource).catch(err => {
+              console.warn(`Failed to cache ${resource}:`, err);
+            })
+          )
+        );
+      })
+  );
+  // Force the waiting service worker to become the active service worker
+  self.skipWaiting();
 });
 
 // Update a service worker

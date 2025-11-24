@@ -1,69 +1,64 @@
-window.addEventListener('load', async (event) => {
+// Initialize IndexedDB
+const dbName = 'beerDB';
+const storeName = 'beers';
 
-  async function initDb() {
-    console.log('Initialisation de la base de données IndexedDB...');
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open('beerDB', 1);
+let db;
 
-      request.onupgradeneeded = event => {
-        const db = event.target.result;
-        const objectStore = db.createObjectStore('beers', { keyPath: 'id' });
-        objectStore.createIndex('name', 'name', { unique: false });
-      };
+const openDB = () => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(dbName, 1);
 
-       request.onsuccess = event => {
-         resolve(event.target.result);
-       };      request.onerror = event => {
-        reject('Error opening IndexedDB');
-      };
-    });
-  }
-  const db = await initDb();
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      db = request.result;
+      resolve(db);
+    };
 
-  async function addBeerToDb(beer) {
-    return new Promise((resolve, reject) => {
-      try {
-        if (!beer.id) {
-          beer.id = Date.now();
-        }
-        const transaction = db.transaction(['beers'], 'readwrite');
-        const objectStore = transaction.objectStore('beers');
-        const request = objectStore.put(beer);
-        request.onsuccess = () => resolve(beer);
-        request.onerror = (e) => reject(new Error('Failed to add beer'));
-      } catch (err) {
-        reject(err);
+    request.onupgradeneeded = (event) => {
+      const database = event.target.result;
+      if (!database.objectStoreNames.contains(storeName)) {
+        database.createObjectStore(storeName, { keyPath: 'id' });
       }
-    });
+    };
+  });
+};
+
+// Add or update a beer in the database
+async function addBeerToDb(beer) {
+  if (!db) await openDB();
+  
+  // Assign id if missing
+  if (!beer.id) {
+    beer.id = Date.now();
   }
 
-  // Expose DB helpers to global scope so other scripts can call them
-  window.addBeerToDb = addBeerToDb;
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([storeName], 'readwrite');
+    const store = transaction.objectStore(storeName);
+    const request = store.put(beer);
 
-  async function getBeerFromDb(id) {
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(['beers'], 'readonly');
-      const objectStore = transaction.objectStore('beers');
-      const request = id ? objectStore.get(id) : objectStore.getAll();
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(beer);
+  });
+}
 
-      request.onsuccess = event => {
-        resolve(event.target.result);
-      };
+// Get all beers from the database
+async function getAllBeersFromDb() {
+  if (!db) await openDB();
 
-      request.onerror = event => {
-        reject(new Error('Error getting beer from IndexedDB'));
-      };
-    });
-  }
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([storeName], 'readonly');
+    const store = transaction.objectStore(storeName);
+    const request = store.getAll();
 
-  async function getAllBeersFromDb() {
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(['beers'], 'readonly');
-      const objectStore = transaction.objectStore('beers');
-      const request = objectStore.getAll();
-      request.onsuccess = e => resolve(e.target.result || []);
-      request.onerror = () => reject(new Error('Failed to get beers'));
-    });
-  }
-  window.getAllBeersFromDb = getAllBeersFromDb;
-});
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+  });
+}
+
+// Expose functions globally
+window.addBeerToDb = addBeerToDb;
+window.getAllBeersFromDb = getAllBeersFromDb;
+
+// Initialize DB on load
+openDB().catch(err => console.error('Failed to open IndexedDB:', err));
