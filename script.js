@@ -1,9 +1,12 @@
 let pageActuelle = 1;
+const perPage = 30; // éléments par page
+let totalPages = 1;
 const compteurDePagesElement = document.getElementById("CompteurDePages");
-const paginationControles = document.getElementById("pagination-controls");
+const paginationControles = document.getElementById("pagination-controles") || document.getElementById("pagination-controls");
 
 function updateCompteurDePages() {
-  compteurDePagesElement.textContent = `page: ${pageActuelle}`;
+  if (!compteurDePagesElement) return;
+  compteurDePagesElement.textContent = `Page ${pageActuelle} / ${totalPages}`;
 }
 
 // debounce helper for search input
@@ -41,8 +44,8 @@ function modelFetchBeers(page) {
 
   // Prefer the official Punk API; fallback to other hosts if needed
   // try primary API, then fallback host if primary fails
-  const primary = `https://api.punkapi.com/v2/beers?page=${page}&per_page=25`;
-  const fallback = `https://punkapi.online/v3/beers?page=${page}`;
+  const primary = `https://api.punkapi.com/v2/beers?page=${page}&per_page=${perPage}`;
+  const fallback = `https://punkapi.online/v3/beers?page=${page}&per_page=${perPage}`;
 
   const fetchWithFallback = async (urls) => {
     let lastError = null;
@@ -78,19 +81,29 @@ function modelFetchBeers(page) {
         }
       }
       console.log('All beers saved to IndexedDB.');
-      
-      // After saving to IndexedDB, prefer rendering beers from the DB so
-      // user-added beers (with imageData/imagePath) are included.
+
+      // Prefer rendering from IndexedDB so user-added beers (with imageData/imagePath)
+      // are included and so we can paginate client-side.
       if (typeof window.getAllBeersFromDb === 'function') {
         try {
           const allFromDb = await window.getAllBeersFromDb();
-          cardContainer.innerHTML = allFromDb.length ? allFromDb.map(renderBeer).join('') : '<p class="muted">Aucune bière trouvée dans la base.</p>';
+          totalPages = Math.max(1, Math.ceil((allFromDb.length || 0) / perPage));
+          // clamp pageActuelle
+          if (pageActuelle > totalPages) pageActuelle = totalPages;
+          const start = (pageActuelle - 1) * perPage;
+          const slice = allFromDb.slice(start, start + perPage);
+          cardContainer.innerHTML = slice.length ? slice.map(renderBeer).join('') : '<p class="muted">Aucune bière trouvée dans la base.</p>';
+          // update navigation buttons
+          setNavButtonsState();
         } catch (err) {
           console.error('Failed to read beers from DB for rendering:', err);
           cardContainer.innerHTML = data.map((beer) => renderBeer(beer)).join("");
         }
       } else {
         cardContainer.innerHTML = data.map((beer) => renderBeer(beer)).join("");
+        // If fewer than perPage items returned, assume last page
+        totalPages = data.length < perPage ? pageActuelle : pageActuelle + 1;
+        setNavButtonsState();
       }
       // add entrance animation class with a small stagger
       requestAnimationFrame(() => {
@@ -110,9 +123,11 @@ function modelFetchBeers(page) {
 const btnSuivantTop = document.getElementById("btn-suivant-top");
 if (btnSuivantTop) {
   btnSuivantTop.addEventListener("click", () => {
-    pageActuelle++;
-    modelFetchBeers(pageActuelle);
-    updateCompteurDePages();
+    if (pageActuelle < totalPages) {
+      pageActuelle++;
+      modelFetchBeers(pageActuelle);
+      updateCompteurDePages();
+    }
   });
 } else {
   console.debug('btn-suivant-top introuvable — pas d\'écouteur ajouté');
@@ -129,6 +144,46 @@ if (btnPrecedentTop) {
   });
 } else {
   console.debug('btn-precedent-top introuvable — pas d\'écouteur ajouté');
+}
+
+// helper to enable/disable nav buttons
+function setNavButtonsState() {
+  const prev = document.getElementById('btn-precedent-top');
+  const next = document.getElementById('btn-suivant-top');
+  if (prev) prev.disabled = pageActuelle <= 1;
+  if (next) next.disabled = pageActuelle >= totalPages;
+  updateCompteurDePages();
+
+  // populate page selector if present
+  const pageSelect = document.getElementById('pageSelect');
+  if (pageSelect) {
+    // avoid re-creating if already correct
+    if (pageSelect.options.length !== totalPages) {
+      // clear
+      pageSelect.innerHTML = '';
+      for (let i = 1; i <= totalPages; i++) {
+        const opt = document.createElement('option');
+        opt.value = String(i);
+        opt.text = String(i);
+        pageSelect.appendChild(opt);
+      }
+    }
+    // set current
+    pageSelect.value = String(pageActuelle);
+  }
+}
+
+// Jump to page when selector changes
+const pageSelectEl = document.getElementById('pageSelect');
+if (pageSelectEl) {
+  pageSelectEl.addEventListener('change', (e) => {
+    const v = parseInt(e.target.value, 10) || 1;
+    if (v >= 1 && v <= totalPages) {
+      pageActuelle = v;
+      modelFetchBeers(pageActuelle);
+      setNavButtonsState();
+    }
+  });
 }
 
 updateCompteurDePages();

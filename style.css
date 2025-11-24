@@ -79,6 +79,28 @@ main{padding:2rem 1rem}
 #pagination-controls .btn:hover{transform:translateY(-3px)}
 #CompteurDePages{font-weight:700;color:var(--muted);margin:0 .75rem}
 
+/* Page selector dropdown styling */
+#pageSelect{
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	padding: .45rem .75rem;
+	border-radius: 8px;
+	border: 1px solid rgba(11,18,32,0.08);
+	background: linear-gradient(180deg, #fff, #f7fafc);
+	box-shadow: 0 6px 18px rgba(11,18,32,0.04);
+	cursor: pointer;
+	font-weight: 700;
+	color: var(--text);
+	min-width: 64px;
+}
+#pageSelect:focus{box-shadow:0 0 0 4px rgba(255,140,66,0.08);outline:none}
+#pageSelect option{font-weight:400}
+
+/* Add a small arrow using pseudo-element on parent if needed */
+.page-select-wrapper{position:relative;display:inline-block}
+.page-select-wrapper::after{content:'▼';position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:10px}
+
 /* small cards entrance animation */
 .beer{opacity:0;transform:translateY(8px)}
 .beer.card-in{animation:cardIn .36s cubic-bezier(.2,.9,.3,1) forwards}
