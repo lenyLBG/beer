@@ -79,7 +79,19 @@ function modelFetchBeers(page) {
       }
       console.log('All beers saved to IndexedDB.');
       
-      cardContainer.innerHTML = data.map((beer) => template(beer)).join("");
+      // After saving to IndexedDB, prefer rendering beers from the DB so
+      // user-added beers (with imageData/imagePath) are included.
+      if (typeof window.getAllBeersFromDb === 'function') {
+        try {
+          const allFromDb = await window.getAllBeersFromDb();
+          cardContainer.innerHTML = allFromDb.length ? allFromDb.map(renderBeer).join('') : '<p class="muted">Aucune bière trouvée dans la base.</p>';
+        } catch (err) {
+          console.error('Failed to read beers from DB for rendering:', err);
+          cardContainer.innerHTML = data.map((beer) => renderBeer(beer)).join("");
+        }
+      } else {
+        cardContainer.innerHTML = data.map((beer) => renderBeer(beer)).join("");
+      }
       // add entrance animation class with a small stagger
       requestAnimationFrame(() => {
         const cards = cardContainer.querySelectorAll('.beer, .card');
@@ -123,17 +135,44 @@ updateCompteurDePages();
 modelFetchBeers(pageActuelle);
 
 
-var template = (beer) => `
-  <div class="beer card border rounded-lg p-4 shadow-md hover:shadow-xl transition-shadow">
-    <img src="https://punkapi.online/v3/images/${beer.image}" alt="${beer.name}" />
-    <h2>${beer.name}</h2>
-    <p class="muted">${beer.tagline || ''}</p>
-    <p class="beer-desc">${(beer.description || '').slice(0, 160)}</p>
-    <div class="beer-meta">
-      <span class="accent">ABV</span> ${beer.abv ?? '-'} &nbsp;•&nbsp; <span class="accent">IBU</span> ${beer.ibu ?? '-'}
+/**
+ * Render a beer card. Chooses image in this order:
+ * 1) beer.imageData (DataURL stored for user-added images)
+ * 2) beer.imagePath (local path such as 'img/beer.jpg')
+ * 3) beer.image (API-provided filename) via punkapi.online
+ * 4) default local image 'img/beer.jpg'
+ */
+function renderBeer(beer) {
+  const defaultImg = 'img/beer.jpg';
+  let src = defaultImg;
+
+  if (beer.imageData) {
+    src = beer.imageData;
+  } else if (beer.imagePath) {
+    src = beer.imagePath;
+  } else if (beer.image) {
+    // some API entries include an `image` filename
+    src = `https://punkapi.online/v3/images/${beer.image}`;
+  }
+
+  const name = beer.name || 'Bière sans nom';
+  const tagline = beer.tagline || '';
+  const desc = (beer.description || '').slice(0, 160);
+  const abv = beer.abv ?? beer.alcoholContent ?? '-';
+  const ibu = beer.ibu ?? '-';
+
+  return `
+    <div class="beer card border rounded-lg p-4 shadow-md hover:shadow-xl transition-shadow">
+      <img src="${src}" alt="${name}" onerror="this.onerror=null;this.src='${defaultImg}';" style="max-width:120px;max-height:200px;object-fit:contain;" />
+      <h2>${name}</h2>
+      <p class="muted">${tagline}</p>
+      <p class="beer-desc">${desc}</p>
+      <div class="beer-meta">
+        <span class="accent">ABV</span> ${abv} &nbsp;•&nbsp; <span class="accent">IBU</span> ${ibu}
+      </div>
     </div>
-  </div>
-`;
+  `;
+}
 
 // safe search bar handling — search across all saved beers (IndexedDB) when available
 const searchBar = document.getElementById('searchBar');

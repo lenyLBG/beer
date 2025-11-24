@@ -22,20 +22,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // preview when selecting an image
     if (fileInput && preview) {
+        const DEFAULT_IMAGE = 'img/beer.jpg';
+        let objectUrl = null;
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files && e.target.files[0];
+            console.log('fileInput change, file:', file);
             if (!file) {
-                preview.src = '';
-                preview.style.display = 'none';
+                if (objectUrl) {
+                    URL.revokeObjectURL(objectUrl);
+                    objectUrl = null;
+                }
+                // show default image when no file selected
+                preview.src = DEFAULT_IMAGE;
+                preview.style.display = 'block';
+                console.log('No file selected — using default preview');
                 return;
             }
             try {
-                const dataUrl = await readFileAsDataURL(file);
-                preview.src = dataUrl;
+                // use object URL for faster preview and less memory usage
+                if (objectUrl) {
+                    URL.revokeObjectURL(objectUrl);
+                }
+                objectUrl = URL.createObjectURL(file);
+                preview.src = objectUrl;
                 preview.style.display = 'block';
+                console.log('Preview set via objectURL');
             } catch (err) {
                 console.error('Preview error', err);
-                preview.style.display = 'none';
+                // fallback to default image
+                preview.src = DEFAULT_IMAGE;
+                preview.style.display = 'block';
             }
         });
     }
@@ -60,16 +76,26 @@ document.addEventListener('DOMContentLoaded', () => {
         // If an image file was provided, read it as DataURL and attach
         try {
             if (file) {
+                console.log('Reading image file to DataURL...');
                 const dataUrl = await readFileAsDataURL(file);
                 beer.imageData = dataUrl; // store data URL for display later
+                beer.imagePath = null; // no external path, stored inline
+                console.log('imageData length:', dataUrl ? dataUrl.length : 0);
             } else {
+                // no file selected: use default image path
                 beer.imageData = null;
+                beer.imagePath = 'img/beer.jpg';
+                console.log('No file provided — using default imagePath');
             }
         } catch (err) {
             console.error('Erreur lecture image:', err);
-            showMessage('Impossible de lire l\'image fournie.', true);
-            return;
+            // if reading fails, fall back to default path
+            beer.imageData = null;
+            beer.imagePath = 'img/beer.jpg';
+            console.warn('Falling back to default imagePath due to read error');
         }
+
+        console.log('Prepared beer object:', beer);
 
         try {
             if (typeof window.addBeerToDb !== 'function') {
