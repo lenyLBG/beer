@@ -44,11 +44,12 @@ function modelFetchBeers(page) {
 
   // Prefer the official Punk API; fallback to other hosts if needed
   // try primary API, then fallback host if primary fails
-  const primary = `https://api.punkapi.com/v2/beers?page=${page}&per_page=${perPage}`;
-  const fallback = `https://punkapi.online/v3/beers?page=${page}&per_page=${perPage}`;
+  const primary = (p) => `https://api.punkapi.com/v2/beers?page=${p}&per_page=25`;
+  const fallback = (p) => `https://punkapi.online/v3/beers?page=${p}&per_page=25`;
 
-  const fetchWithFallback = async (urls) => {
+  const fetchWithFallback = async (urlFn, pageNum) => {
     let lastError = null;
+    const urls = [primary(pageNum), fallback(pageNum)];
     for (const url of urls) {
       try {
         const res = await fetch(url);
@@ -63,17 +64,35 @@ function modelFetchBeers(page) {
     throw lastError;
   };
 
-  fetchWithFallback([primary, fallback])
-    .then(async (data) => {
-      console.log('Beers fetched:', data && data.length);
-      if (!Array.isArray(data) || data.length === 0) {
+  // Fetch multiple pages from API (5 pages = ~125 beers)
+  (async () => {
+    try {
+      let allBeers = [];
+      for (let apiPage = 1; apiPage <= 5; apiPage++) {
+        try {
+          const data = await fetchWithFallback(null, apiPage);
+          if (!Array.isArray(data) || data.length === 0) {
+            console.log(`API page ${apiPage} is empty, stopping.`);
+            break;
+          }
+          console.log(`Fetched API page ${apiPage}: ${data.length} beers`);
+          allBeers = allBeers.concat(data);
+        } catch (err) {
+          console.warn(`Failed to fetch API page ${apiPage}:`, err.message);
+          break;
+        }
+      }
+
+      if (allBeers.length === 0) {
         cardContainer.innerHTML = '<p class="muted">Aucune bière trouvée.</p>';
         return;
       }
-      
+
+      console.log('Total beers fetched from API:', allBeers.length);
+
       // Save all beers to IndexedDB
       console.log('Saving beers to IndexedDB...');
-      for (const beer of data) {
+      for (const beer of allBeers) {
         try {
           await addBeerToDb(beer);
         } catch (err) {
@@ -82,8 +101,7 @@ function modelFetchBeers(page) {
       }
       console.log('All beers saved to IndexedDB.');
 
-      // Prefer rendering from IndexedDB so user-added beers (with imageData/imagePath)
-      // are included and so we can paginate client-side.
+      // Render from IndexedDB with client-side pagination
       if (typeof window.getAllBeersFromDb === 'function') {
         try {
           const allFromDb = await window.getAllBeersFromDb();
@@ -99,17 +117,18 @@ function modelFetchBeers(page) {
           attachCardHandlers(cardContainer, slice);
         } catch (err) {
           console.error('Failed to read beers from DB for rendering:', err);
-          cardContainer.innerHTML = data.map((beer) => renderBeer(beer)).join("");
-          attachCardHandlers(cardContainer, data);
+          cardContainer.innerHTML = allBeers.map((beer) => renderBeer(beer)).join("");
+          attachCardHandlers(cardContainer, allBeers);
+          totalPages = Math.max(1, Math.ceil(allBeers.length / perPage));
+          setNavButtonsState();
         }
       } else {
-        cardContainer.innerHTML = data.map((beer) => renderBeer(beer)).join("");
-        // attach handlers for API-sourced cards
-        attachCardHandlers(cardContainer, data);
-        // If fewer than perPage items returned, assume last page
-        totalPages = data.length < perPage ? pageActuelle : pageActuelle + 1;
+        cardContainer.innerHTML = allBeers.map((beer) => renderBeer(beer)).join("");
+        attachCardHandlers(cardContainer, allBeers);
+        totalPages = Math.max(1, Math.ceil(allBeers.length / perPage));
         setNavButtonsState();
       }
+
       // add entrance animation class with a small stagger
       requestAnimationFrame(() => {
         const cards = cardContainer.querySelectorAll('.beer, .card');
@@ -117,12 +136,12 @@ function modelFetchBeers(page) {
           setTimeout(() => c.classList.add('card-in'), idx * 40);
         });
       });
-    })
-    .catch((error) => {
+    } catch (error) {
       console.error("Error fetching beers:", error);
       // restore previous content or show a friendly message
       cardContainer.innerHTML = previous || `<p class="muted">Impossible de charger les bières pour le moment. ${error.message}</p>`;
-    });
+    }
+  })();
 }
 
 const btnSuivantTop = document.getElementById("btn-suivant-top");
