@@ -95,12 +95,17 @@ function modelFetchBeers(page) {
           cardContainer.innerHTML = slice.length ? slice.map(renderBeer).join('') : '<p class="muted">Aucune bière trouvée dans la base.</p>';
           // update navigation buttons
           setNavButtonsState();
+          // attach handlers so cards open modal reliably
+          attachCardHandlers(cardContainer, slice);
         } catch (err) {
           console.error('Failed to read beers from DB for rendering:', err);
           cardContainer.innerHTML = data.map((beer) => renderBeer(beer)).join("");
+          attachCardHandlers(cardContainer, data);
         }
       } else {
         cardContainer.innerHTML = data.map((beer) => renderBeer(beer)).join("");
+        // attach handlers for API-sourced cards
+        attachCardHandlers(cardContainer, data);
         // If fewer than perPage items returned, assume last page
         totalPages = data.length < perPage ? pageActuelle : pageActuelle + 1;
         setNavButtonsState();
@@ -217,7 +222,7 @@ function renderBeer(beer) {
   const ibu = beer.ibu ?? '-';
 
   return `
-    <div class="beer card border rounded-lg p-4 shadow-md hover:shadow-xl transition-shadow">
+    <div class="beer card border rounded-lg p-4 shadow-md hover:shadow-xl transition-shadow" role="button" tabindex="0" style="cursor:pointer;">
       <img src="${src}" alt="${name}" onerror="this.onerror=null;this.src='${defaultImg}';" style="max-width:120px;max-height:200px;object-fit:contain;" />
       <h2>${name}</h2>
       <p class="muted">${tagline}</p>
@@ -227,6 +232,28 @@ function renderBeer(beer) {
       </div>
     </div>
   `;
+}
+
+// Attach click and keyboard handlers to rendered beer cards.
+function attachCardHandlers(container, beers) {
+  if (!container || !Array.isArray(beers)) return;
+  const cards = Array.from(container.querySelectorAll('.beer'));
+  cards.forEach((card, idx) => {
+    // remove previous handlers to avoid duplicates
+    card.onclick = null;
+    card.onkeydown = null;
+    const beer = beers[idx];
+    if (!beer) return;
+    card.addEventListener('click', () => {
+      if (typeof window.openBeerModal === 'function') window.openBeerModal(beer);
+    });
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (typeof window.openBeerModal === 'function') window.openBeerModal(beer);
+      }
+    });
+  });
 }
 
 // safe search bar handling — search across all saved beers (IndexedDB) when available
@@ -253,6 +280,8 @@ if (searchBar) {
         const slice = filtered.slice(start, start + perPage);
         
         container.innerHTML = slice.length ? slice.map(renderBeer).join('') : '<p class="muted">Aucun résultat.</p>';
+        // attach handlers for the filtered slice
+        attachCardHandlers(container, slice);
         setNavButtonsState();
         requestAnimationFrame(() => {
           const cards = container.querySelectorAll('.beer, .card');
@@ -295,6 +324,8 @@ if (namesearchBar) {
         const slice = filtered.slice(start, start + perPage);
         
         container.innerHTML = slice.length ? slice.map(renderBeer).join('') : '<p class="muted">Aucun résultat.</p>';
+        // attach handlers for the filtered slice
+        attachCardHandlers(container, slice);
         setNavButtonsState();
         requestAnimationFrame(() => {
           const cards = container.querySelectorAll('.beer, .card');

@@ -41,10 +41,41 @@
             </button>
         </div>
     </main>
+
+    <!-- Modal de détails -->
+    <div id="beerModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Fermer">&times;</button>
+            <div class="modal-body">
+                <img id="modalImage" src="" alt="" style="max-width:150px;height:auto;margin-bottom:1rem;" />
+                <h2 id="modalName"></h2>
+                <p id="modalTagline" style="font-style:italic;color:var(--muted);"></p>
+                <p id="modalDescription"></p>
+                <div id="modalMeta"
+                    style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:1rem;font-weight:700;">
+                    <div><span class="accent">ABV</span><br /><span id="modalAbv"></span></div>
+                    <div><span class="accent">IBU</span><br /><span id="modalIbu"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <footer>
         <p>&copy; 2024 La Brasserie Artisanale</p>
+        <script>
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./workers.js')
+                    .then(registration => {
+                        console.log('Service Worker enregistré avec succès.', registration);
+                    })
+                    .catch(error => {
+                        console.log("Erreur lors de l'enregistrement du Service Worker.", error);
+                    });
+            }
+        </script>
         <script src="script.js"></script>
         <script src='indexDB.js'></script>
+        <script src="modal.js"></script>
     </footer>
 </body>
 

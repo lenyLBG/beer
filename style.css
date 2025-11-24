@@ -252,3 +252,12 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .spinner{width:36px;height:36px;border-radius:50%;border:4px solid rgba(11,18,32,0.08);border-top-color:var(--accent);animation:spin 1s linear infinite;margin:1rem auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* Modal / Popup */
+.modal-overlay{position:fixed;inset:0;background:rgba(11,18,32,0.6);display:flex;align-items:center;justify-content:center;z-index:1000}
+.modal-content{background:var(--card);border-radius:var(--radius);padding:2rem;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(11,18,32,0.15);position:relative;animation:modalSlideIn .3s ease forwards}
+.modal-close{position:absolute;top:1rem;right:1rem;width:32px;height:32px;border:0;border-radius:50%;background:rgba(11,18,32,0.08);cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;color:var(--text);transition:background .15s ease;font-weight:700;line-height:1}
+.modal-close:hover{background:rgba(11,18,32,0.12)}
+.modal-body{display:flex;flex-direction:column;gap:.75rem}
+.modal-body h2{margin:0;margin-bottom:.5rem}
+@keyframes modalSlideIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
