@@ -17,5 +17,14 @@
             "sizes": "512x512",
             "type": "image/jpeg"
         }
+    ],
+    "shortcuts": [
+        {
+            "name": "Ajouter une bière",
+            "short_name": "Ajouter",
+            "description": "Ajouter une nouvelle bière à la liste",
+            "url": "./addBeer.html",
+            "icons": [{ "src": "img/logo.png", "sizes": "96x96", "type": "image/png" }]
+        }
     ]
 }
