@@ -6,6 +6,15 @@ function updateCompteurDePages() {
   compteurDePagesElement.textContent = `page: ${pageActuelle}`;
 }
 
+// debounce helper for search input
+function debounce(fn, wait = 250) {
+  let t = null;
+  return function(...args) {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), wait);
+  };
+}
+
 function modelFetchBeers(page) {
   // Determine where to render cards: prefer #card-container, then .beer-list, then .beer-card
   const findOrCreateContainer = () => {
@@ -126,92 +135,71 @@ var template = (beer) => `
   </div>
 `;
 
-// safe search bar handling
+// safe search bar handling — search across all saved beers (IndexedDB) when available
 const searchBar = document.getElementById('searchBar');
 if (searchBar) {
-  searchBar.addEventListener('input', (event) => {
-    const query = event.target.value.toLowerCase();
-    // simple client-side filter: show/hide cards
+  const doSearch = debounce(async (event) => {
+    const q = (event.target.value || '').trim().toLowerCase();
     const container = document.getElementById('card-container') || document.querySelector('.beer-list');
     if (!container) return;
+
+    if (typeof window.getAllBeersFromDb === 'function') {
+      try {
+        const all = await window.getAllBeersFromDb();
+        const filtered = all.filter(b => {
+          const text = ((b.name || '') + ' ' + (b.tagline || '') + ' ' + (b.description || '')).toLowerCase();
+          return text.includes(q);
+        });
+        container.innerHTML = filtered.length ? filtered.map(template).join('') : '<p class="muted">Aucun résultat.</p>';
+        requestAnimationFrame(() => {
+          const cards = container.querySelectorAll('.beer, .card');
+          cards.forEach((c, idx) => setTimeout(() => c.classList.add('card-in'), idx * 40));
+        });
+        return;
+      } catch (err) {
+        console.error('Search failed (IndexedDB):', err);
+      }
+    }
+
+    // fallback to current visible cards
     const cards = Array.from(container.querySelectorAll('.beer, .card'));
     cards.forEach(card => {
       const text = (card.innerText || '').toLowerCase();
-      card.style.display = text.includes(query) ? '' : 'none';
+      card.style.display = text.includes(q) ? '' : 'none';
     });
-  });
+  }, 250);
+
+  searchBar.addEventListener('input', doSearch);
 }
 
 const namesearchBar = document.getElementById('nameSearchBar');
 if (namesearchBar) {
-  namesearchBar.addEventListener('input', (event) => {
-    const query = event.target.value.toLowerCase();
-    // simple client-side filter: show/hide cards
+  const doNameSearch = debounce(async (event) => {
+    const q = (event.target.value || '').trim().toLowerCase();
     const container = document.getElementById('card-container') || document.querySelector('.beer-list');
     if (!container) return;
+
+    if (typeof window.getAllBeersFromDb === 'function') {
+      try {
+        const all = await window.getAllBeersFromDb();
+        const filtered = all.filter(b => (b.name || '').toLowerCase().includes(q));
+        container.innerHTML = filtered.length ? filtered.map(template).join('') : '<p class="muted">Aucun résultat.</p>';
+        requestAnimationFrame(() => {
+          const cards = container.querySelectorAll('.beer, .card');
+          cards.forEach((c, idx) => setTimeout(() => c.classList.add('card-in'), idx * 40));
+        });
+        return;
+      } catch (err) {
+        console.error('Name search failed (IndexedDB):', err);
+      }
+    }
+
     const cards = Array.from(container.querySelectorAll('.beer, .card'));
     cards.forEach(card => {
       const text = (card.innerText || '').toLowerCase();
-      card.style.display = text.includes(query) ? '' : 'none';
+      card.style.display = text.includes(q) ? '' : 'none';
     });
-  });
+  }, 250);
+
+  namesearchBar.addEventListener('input', doNameSearch);
 }
-window.addEventListener('load', async (event) => {
-
-  async function initDb() {
-    console.log('Initialisation de la base de données IndexedDB...');
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open('beerDB', 1);
-
-      request.onupgradeneeded = event => {
-        const db = event.target.result;
-        const objectStore = db.createObjectStore('beers', { keyPath: 'id' });
-        objectStore.createIndex('name', 'name', { unique: false });
-      };
-
-       request.onsuccess = event => {
-         resolve(event.target.result);
-       };      request.onerror = event => {
-        reject('Error opening IndexedDB');
-      };
-    });
-  }
-  const db = await initDb();
-
-  async function addBeerToDb(beer) {
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(['beers'], 'readwrite');
-      const objectStore = transaction.objectStore('beers');
-      const request = objectStore.put(beer); // use put to avoid duplicates
-      request.onsuccess = () => resolve(beer);
-      request.onerror = () => reject(new Error('Failed to add beer'));
-    });
-  }
-
-  async function getBeerFromDb(id) {
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(['beers'], 'readonly');
-      const objectStore = transaction.objectStore('beers');
-      const request = id ? objectStore.get(id) : objectStore.getAll();
-
-      request.onsuccess = event => {
-        resolve(event.target.result);
-      };
-
-      request.onerror = event => {
-        reject(new Error('Error getting beer from IndexedDB'));
-      };
-    });
-  }
-
-  async function getAllBeersFromDb() {
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(['beers'], 'readonly');
-      const objectStore = transaction.objectStore('beers');
-      const request = objectStore.getAll();
-      request.onsuccess = e => resolve(e.target.result || []);
-      request.onerror = () => reject(new Error('Failed to get beers'));
-    });
-  }
-
-});

@@ -21,22 +21,43 @@
     <main>
         <h1>Ajouter une nouvelle bière</h1>
         <br>
-        <form id="addBeerForm">
-            <label for="beerName">Nom de la bière:</label>
-            <input type="text" id="beerName" name="beerName" required>
+        <form id="beerForm">
+            <label for="beerName">Nom de la bière :</label>
+            <input type="text" id="beerName" name="beerName" required placeholder="Ex: IPA du Coin">
             <br>
-            <label for="beerType">Type de bière:</label>
-            <input type="text" id="beerType" name="beerType" required>
+
+            <label for="beerType">Type / Style :</label>
+            <input type="text" id="beerType" name="beerType" required placeholder="Ex: IPA, Lager, Stout">
             <br>
-            <label for="beerABV">Teneur en alcool (%):</label>
-            <input type="number" id="beerABV" name="beerABV" step="0.1" required>
+
+            <label for="alcoholContent">Teneur en alcool (%):</label>
+            <input type="number" id="alcoholContent" name="alcoholContent" step="0.1" required placeholder="Ex: 5.5">
             <br>
+
+            <label for="brewery">Brasserie :</label>
+            <input type="text" id="brewery" name="brewery" required placeholder="Ex: Brasserie Locale">
+            <br>
+
+            <label for="description">Description (facultatif) :</label>
+            <input type="text" id="description" name="description" rows="3" placeholder="Aromes, notes, etc."></input>
+            <br>
+
+            <div id="formMessage" role="status" aria-live="polite" style="color:green;margin-bottom:8px"></div>
+            <br>
+
+            <label for="beerImage">Image de la bière :</label>
+            <input type="file" id="beerImage" name="beerImage" accept="image/*">
+            <br>
+            <img id="previewImage" src="" alt="Aperçu de l'image" style="max-width: 200px; display: none;">
+            <br>
+
             <button type="submit">Ajouter la bière</button>
         </form>
     </main>
     <footer>
         <p>&copy; 2024 La Brasserie Artisanale</p>
-        <script src="script.js"></script>
+        <script src='indexDB.js'></script>
+        <script src="addBeer.js"></script>
     </footer>
 </body>
 
